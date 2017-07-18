@@ -1,22 +1,25 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
+using TDSBridge.Common.Header;
+using TDSBridge.Common.Packet;
 
 namespace TDSBridge.Common.Message
 {
     public class TDSMessage
     {
-        protected List<Packet.TDSPacket> _lPackets = new List<Packet.TDSPacket>();
+        protected List<TDSPacket> _lPackets = new List<TDSPacket>();
 
-        public List<Packet.TDSPacket> Packets { get { return _lPackets; } }
+        public TDSMessage()
+        {
+        }
 
-        public TDSMessage() { }
-
-        public TDSMessage(Packet.TDSPacket firtsPacket)
+        public TDSMessage(TDSPacket firtsPacket)
         {
             Packets.Add(firtsPacket);
         }
+
+        public List<TDSPacket> Packets => _lPackets;
 
         public bool IsComplete
         {
@@ -24,7 +27,8 @@ namespace TDSBridge.Common.Message
             {
                 if (Packets.Count == 0)
                     return false;
-                return (Packets[Packets.Count - 1].Header.StatusBitMask & Header.StatusBitMask.END_OF_MESSAGE) == Header.StatusBitMask.END_OF_MESSAGE;
+                return (Packets[Packets.Count - 1].Header.StatusBitMask & StatusBitMask.END_OF_MESSAGE) ==
+                       StatusBitMask.END_OF_MESSAGE;
             }
         }
 
@@ -34,32 +38,63 @@ namespace TDSBridge.Common.Message
             {
                 if (Packets.Count == 0)
                     return false;
-                return (Packets[Packets.Count - 1].Header.StatusBitMask & Header.StatusBitMask.IGNORE_EVENT) == Header.StatusBitMask.IGNORE_EVENT;
+                return (Packets[Packets.Count - 1].Header.StatusBitMask & StatusBitMask.IGNORE_EVENT) ==
+                       StatusBitMask.IGNORE_EVENT;
+            }
+        }
+
+        public void BuildMessage(HeaderType messageType, byte[] lPayLoad)
+        {
+            var packet_size = 4096 - 8;
+
+            Packets.Clear();
+
+            for (var lower = 0; lower < lPayLoad.Length; lower += packet_size)
+            {
+                var payloadSize = lPayLoad.Length - lower;
+                if (payloadSize > packet_size)
+                    payloadSize = packet_size;
+
+                // Create new TDS header
+                var header = new TDSHeader();
+                header.Type = messageType;
+                if (lPayLoad.Length - lower <= packet_size)
+                    header.StatusBitMask = StatusBitMask.END_OF_MESSAGE;
+                else
+                    header.StatusBitMask = StatusBitMask.NORMAL;
+                header.PayloadSize = payloadSize;
+
+                var payload = new byte[payloadSize];
+                Array.Copy(lPayLoad, lower, payload, 0, payloadSize);
+
+                // Create new TDS packet with new TDS header and payload
+                var newPacket = new TDSPacket(header.Data, payload, payloadSize);
+
+                // Add packet into message
+                Packets.Add(newPacket);
             }
         }
 
 
         public byte[] AssemblePayload()
         {
-            List<byte> lPayLoad = new List<byte>(4096 * 4);
+            var lPayLoad = new List<byte>(4096 * 4);
 
-            for (int i = 0; i < Packets.Count; i++)
-            {
-                lPayLoad.AddRange(Packets[i].Payload);                
-            }
+            for (var i = 0; i < Packets.Count; i++)
+                lPayLoad.AddRange(Packets[i].Payload);
 
             return lPayLoad.ToArray();
         }
 
-        public static TDSMessage CreateFromFirstPacket(Packet.TDSPacket firstPacket)
+        public static TDSMessage CreateFromFirstPacket(TDSPacket firstPacket)
         {
             switch (firstPacket.Header.Type)
             {
-                case Header.HeaderType.SQLBatch:
+                case HeaderType.SQLBatch:
                     return new SQLBatchMessage(firstPacket);
-                case Header.HeaderType.AttentionSignal:
+                case HeaderType.AttentionSignal:
                     return new AttentionMessage(firstPacket);
-                case Header.HeaderType.RPC:
+                case HeaderType.RPC:
                     return new RPCRequestMessage(firstPacket);
                 default:
                     return new TDSMessage(firstPacket);
@@ -70,14 +105,14 @@ namespace TDSBridge.Common.Message
         {
             if (IsComplete)
             {
-                StringBuilder sb = new StringBuilder(this.GetType().FullName);
+                var sb = new StringBuilder(GetType().FullName);
 
                 sb.Append("[#Packets=" + Packets.Count +
-                    ";IsComplete=" + IsComplete +
-                    ";HasIgnoreBitSet=" + HasIgnoreBitSet +
-                    ";TotalPayloadSize=" + AssemblePayload().Length);
+                          ";IsComplete=" + IsComplete +
+                          ";HasIgnoreBitSet=" + HasIgnoreBitSet +
+                          ";TotalPayloadSize=" + AssemblePayload().Length);
 
-                for (int i = 0; i < Packets.Count; i++)
+                for (var i = 0; i < Packets.Count; i++)
                 {
                     sb.Append("\n\t[P" + i + "[");
                     sb.Append(Packets[i]);
@@ -88,11 +123,7 @@ namespace TDSBridge.Common.Message
 
                 return sb.ToString();
             }
-            else
-            {
-                return this.GetType().FullName + "{Incomplete message}";
-            }
-
+            return GetType().FullName + "{Incomplete message}";
         }
     }
 }

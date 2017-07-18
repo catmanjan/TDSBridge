@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-namespace TDSBridge.Common.Header
+﻿namespace TDSBridge.Common.Header
 {
     public enum HeaderType
     {
@@ -11,7 +6,7 @@ namespace TDSBridge.Common.Header
         PreTD7Login = 2,
         RPC = 3,
         TabularResult = 4,
-        
+
         AttentionSignal = 6,
         BulkLoadData = 7,
 
@@ -20,7 +15,7 @@ namespace TDSBridge.Common.Header
         TDS7Login = 16,
         SSPIMessage = 17,
         PreLoginMessage = 18,
-        
+
         Unknown = 0xFF
     }
 }

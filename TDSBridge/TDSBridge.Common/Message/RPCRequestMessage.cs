@@ -1,16 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using TDSBridge.Common.Packet;
 
 namespace TDSBridge.Common.Message
 {
     public class RPCRequestMessage : TDSMessage
     {
-        public RPCRequestMessage() { }
+        public RPCRequestMessage()
+        {
+        }
 
-        public RPCRequestMessage(Packet.TDSPacket firtsPacket)
+        public RPCRequestMessage(TDSPacket firtsPacket)
             : base(firtsPacket)
-        { }
+        {
+        }
     }
 }

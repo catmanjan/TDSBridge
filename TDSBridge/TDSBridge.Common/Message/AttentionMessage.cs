@@ -1,16 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using TDSBridge.Common.Packet;
 
 namespace TDSBridge.Common.Message
 {
     public class AttentionMessage : TDSMessage
     {
-        public AttentionMessage() { }
+        public AttentionMessage()
+        {
+        }
 
-        public AttentionMessage(Packet.TDSPacket firtsPacket)
+        public AttentionMessage(TDSPacket firtsPacket)
             : base(firtsPacket)
-        { }
+        {
+        }
     }
 }

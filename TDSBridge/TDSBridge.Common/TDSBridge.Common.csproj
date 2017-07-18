@@ -66,6 +66,7 @@
     <Compile Include="Packet\TDSPacket.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SocketCouple.cs" />
+    <Compile Include="SQLModifier.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="itpcfsql.snk" />
